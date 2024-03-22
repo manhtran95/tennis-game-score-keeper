@@ -20,20 +20,20 @@ const
 	STATE_END = "StateEnd"
 )
 
-var normal_map = map[string]string{
-	ZERO: FIFTHTEEN,
-	FIFTHTEEN: THIRTY,
-	THIRTY: FORTY,
+var display_mappings = map[int]string{
+	0: ZERO,
+	1: FIFTHTEEN,
+	2: THIRTY,
+	3: FORTY,
+	4: ADVANCED,
 }
 
 type Player struct {
 	name string
-	score string
+	// score can be 0, 1, 2, 3 or 4, which is mapped to ZERO, FIFTHTEEN, THIRTY, FORTY and ADVANCED respectively
+	score int
 }
 
-func displayScore(player1 Player, player2 Player) {
-	fmt.Printf("(score) %s - %s: %s - %s\n", player1.name, player2.name, player1.score, player2.score)
-}
 
 func main() {
 	// loop for games
@@ -44,57 +44,33 @@ func main() {
 		var playerWinning, playerLosing, winner *Player
 		player1 := Player{
 			name: "Player1",
-			score: ZERO,
+			score: 0,
 		}
 		player2 := Player{
 			name: "Player2",
-			score: ZERO,
+			score: 0,
 		}
+
 		fmt.Println("Tennis game started.")
-		fmt.Println("Please input Player 1 name:")
-		fmt.Scanf("%s", &player1.name)
-		fmt.Println("Please input Player 2 name:")
-		fmt.Scanf("%s", &player2.name)
-		// loop for points during a game
+		inputPlayerNames(&player1, &player2)
+		
+		// loop for points during the game
 		for ;gameState != STATE_END ;{
 			displayScore(player1, player2)
-			// process input for point winner
-			fmt.Printf("Who wins this score?(input '1' for %s or '2' for %s)\n", player1.name, player2.name)
-			fmt.Scanf("%s", &input)
-			if input != "1" && input != "2" {
-				fmt.Println(`Invalid input! Please try again!`)
-				continue
-			}
-			if input == "1" {
-				playerWinning = &player1
-				playerLosing = &player2
-			} else {
-				playerWinning, playerLosing = &player2, &player1
-			}
-			// check for gameState
+			playerWinning, playerLosing = processPointWinning(&player1, &player2)
+			
 			switch gameState {
 			case STATE_NORMAL:
-				// win case
-				if playerWinning.score == FORTY {
-					gameState = STATE_END
-					winner = playerWinning
-				} else if playerWinning.score == THIRTY && playerLosing.score == FORTY {
-					// pre-deuce case
-					gameState = STATE_DEUCE
-					playerWinning.score = FORTY
-				} else {
-					// other case
-					playerWinning.score = normal_map[playerWinning.score]
-				}
+				gameState, winner = processStateNormal(playerWinning, playerLosing)
 			case STATE_DEUCE:
 				switch playerWinning.score{
-				case FORTY:
-					if playerLosing.score == FORTY {
-						playerWinning.score = ADVANCED
+				case 3:
+					if playerLosing.score == 3 {
+						playerWinning.score = 4
 					} else {
-						playerLosing.score = FORTY
+						playerLosing.score = 3
 					}
-				case ADVANCED:
+				case 4:
 					gameState = STATE_END
 					winner = playerWinning
 				}
@@ -109,5 +85,48 @@ func main() {
 			break
 		}
 		fmt.Println("-----")
+	}
+}
+
+func displayScore(player1 Player, player2 Player) {
+	fmt.Printf("(score) %s - %s: %s - %s\n", player1.name, player2.name, display_mappings[player1.score], display_mappings[player2.score])
+}
+
+func inputPlayerNames(player1 *Player, player2 *Player) {
+	fmt.Println("Please input Player 1 name:")
+	fmt.Scanf("%s", &player1.name)
+	fmt.Println("Please input Player 2 name:")
+	fmt.Scanf("%s", &player2.name)
+}
+
+func processPointWinning(player1 *Player, player2 *Player) (*Player, *Player) {
+	var input string
+	for {
+		fmt.Printf("Who wins this score?(input '1' for %s or '2' for %s)\n", player1.name, player2.name)
+		fmt.Scanf("%s", &input)
+		if input != "1" && input != "2" {
+			fmt.Println(`Invalid input! Please try again!`)
+			continue
+		}
+		if input == "1" {
+			return player1, player2
+		} else {
+			return player2, player1
+		}
+	}
+}
+
+func processStateNormal(playerWinning *Player, playerLosing *Player) (string, *Player) {
+	// win case
+	if playerWinning.score == 3 {
+		return STATE_END, playerWinning
+	} else if playerWinning.score == 2 && playerLosing.score == 3 {
+		// pre-deuce case
+		playerWinning.score = 3
+		return STATE_DEUCE, nil
+	} else {
+		// other case
+		playerWinning.score++
+		return STATE_NORMAL, nil
 	}
 }
