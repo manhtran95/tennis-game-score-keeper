@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
 
 /*
 	This program simulates a score keeping system for a tennis game.
@@ -37,11 +41,11 @@ func main() {
 	// loop for games
 	for {
 		/* initialize for the game
-			gameState: state of the game, either STATE_NORMAL, STATE_DEUCE or STATE_END
-			playerWinning, playerLosing: pointer to player winning or losing a particular point
-			winner: pointer to player winning the game
-			player1: first player of the game
-			player2: second player of the game
+		gameState: state of the game, either STATE_NORMAL, STATE_DEUCE or STATE_END
+		playerWinning, playerLosing: pointer to player winning or losing a particular point
+		winner: pointer to player winning the game
+		player1: first player of the game
+		player2: second player of the game
 		*/
 		gameState := STATE_NORMAL
 		var playerWinning, playerLosing, winner *Player
@@ -96,10 +100,13 @@ func displayScore(player1 Player, player2 Player) {
 }
 
 func inputPlayerNames(player1 *Player, player2 *Player) {
+	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Please input Player 1 name:")
-	fmt.Scanf("%s", &player1.name)
+	scanner.Scan()
+	player1.name = scanner.Text()
 	fmt.Println("Please input Player 2 name:")
-	fmt.Scanf("%s", &player2.name)
+	scanner.Scan()
+	player2.name = scanner.Text()
 }
 
 func processPointWinning(player1 *Player, player2 *Player) (*Player, *Player) {
